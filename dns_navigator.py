@@ -5,7 +5,7 @@ VERSION = 'v29121'
 import sys
 import requests
 import datetime
-import icecream
+#import icecream # FOR FUTURE USES
 import pandas as pd
 from cmd import Cmd
 from tqdm import tqdm
