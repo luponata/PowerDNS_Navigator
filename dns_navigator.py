@@ -62,9 +62,9 @@ def platform_login():
 	'Content-Length' : '40',
 	'Content-Type' : 'application/x-www-form-urlencoded',
 	'DNT' : '1',
-	'Host' : 'dns.netorange.it:444',
-	'Origin' : 'https://dns.netorange.it:444',
-	'Referer' : 'https://dns.netorange.it:444/?p=login',
+	'Host' : fqdn_interface,
+	'Origin' : 'https://{}'.format(fqdn_interface),
+	'Referer' : 'https://{}/?p=login'.format(fqdn_interface),
 	'Sec-Fetch-Dest' : 'document',
 	'Sec-Fetch-Mode' : 'navigate',
 	'Sec-Fetch-Site' : 'same-origin',
@@ -78,11 +78,11 @@ def platform_login():
 	'password' : password
 	}
 
-	req = s.post(url ,headers=headers, data = data)
+	req = s.post(url, headers=headers, data = data)
 
 	if req.status_code != 200:
 		raise PageError
-	elif any('Wrong' in s for s in req.text.split()):
+	elif any('Wrong' in s for s in req.text.split()): # Unfortunately frontend doesn't provide useful HTTP status codes
 		raise LoginError
 	else:
 		if debug_mode:
@@ -106,7 +106,7 @@ def load_domain_list():
 	'Upgrade-Insecure-Requests' : '1',
 	'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
 	}
-	req = s.get(url ,headers=headers)
+	req = s.get(url, headers=headers)
 	if req.status_code != 200:
 		raise PageError
 
@@ -169,7 +169,7 @@ def get_domain_records(domain_name, *opts):
 	'Upgrade-Insecure-Requests' : '1',
 	'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
 	}
-	req = s.get(url ,headers=headers)
+	req = s.get(url, headers=headers)
 	if req.status_code != 200:
 		raise PageError
 
@@ -475,7 +475,7 @@ def x_delete_record(domain_name, record_id):
 		'extra[domain_id]': domain_id
 		}
 
-	req = s.post(url ,headers=headers, data = data)
+	req = s.post(url, headers=headers, data = data)
 	if req.status_code != 200:
 		raise PageError
 
