@@ -1,10 +1,11 @@
 #!/usr/bin/env python3.7
-VERSION = 'v27121'
+VERSION = 'v29121'
 # Tested with PowerDNS Webinterface 1.5.3
 
 import sys
 import requests
 import datetime
+import icecream
 import pandas as pd
 from cmd import Cmd
 from tqdm import tqdm
@@ -12,13 +13,16 @@ from shlex import split as split_quotes
 from prettytable import PrettyTable
 from colorama import Fore, Back, Style
 
+# Credentials configuration:
+################################################
 username = ''
 password = ''
 fqdn_interface = 'dns.example.com'
+################################################
 
 if not (username and password):
 	print(f'{Style.BRIGHT}{Fore.RED}Please fill your credentials!{Style.RESET_ALL}')
-	exit(0)
+	exit(1)
 
 try:
 	ask_debug = sys.argv[1]
@@ -43,7 +47,7 @@ def x_return_date():
 	# Return date and time
 	return datetime.datetime.now().strftime("%A %d %B %H:%M")
 
-def x_save_deleted_records(data):
+def x_save_deleted_records(data): # Mantain a copy of all deleted records on a file
 	with open('deleted_records.txt', "a+") as handler:
 		for line in handler:
 			if data in line:
@@ -78,7 +82,11 @@ def platform_login():
 	'password' : password
 	}
 
-	req = s.post(url, headers=headers, data = data)
+	try:
+		req = s.post(url ,headers=headers, data = data, timeout=10)
+	except requests.exceptions.ConnectTimeout:
+		print(f'{Style.BRIGHT}{Fore.RED}Connection timeout!{Style.RESET_ALL}')
+		exit(2)
 
 	if req.status_code != 200:
 		raise PageError
@@ -106,7 +114,7 @@ def load_domain_list():
 	'Upgrade-Insecure-Requests' : '1',
 	'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
 	}
-	req = s.get(url, headers=headers)
+	req = s.get(url, headers = headers)
 	if req.status_code != 200:
 		raise PageError
 
@@ -169,7 +177,7 @@ def get_domain_records(domain_name, *opts):
 	'Upgrade-Insecure-Requests' : '1',
 	'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
 	}
-	req = s.get(url, headers=headers)
+	req = s.get(url, headers = headers)
 	if req.status_code != 200:
 		raise PageError
 
@@ -300,8 +308,8 @@ def x_type_retrieve(type, debug_mode):
 							if NAME == 'nan':
 								NAME = '---'
 							#print('SPF DEBUG ENABLED')
-							if len(key[1][2]) > 100:
-								CONTENT = str(CONTENT[:40]) + f'{Style.BRIGHT}{Fore.YELLOW}...(Use cmd "retr DOMAIN ID"){Style.RESET_ALL}'
+							#if len(key[1][2]) > 100:
+							#	CONTENT = str(CONTENT[:40]) + f'{Style.BRIGHT}{Fore.YELLOW}...(Use cmd "retr DOMAIN ID"){Style.RESET_ALL}'
 							print('{} {} -> [ID: {}] Name: {} , Type: {} , Content: {} , TTL: {} , Priority: {}'.format(f'{Fore.GREEN}SPF record found on domain{Style.RESET_ALL}', domain, ID, NAME, TYPE, CONTENT, TTL, PRIORITY))
 						else:
 							print('{} {}'.format(f'{Fore.GREEN}SPF record found on domain{Style.RESET_ALL}', domain))
@@ -327,8 +335,8 @@ def x_type_retrieve(type, debug_mode):
 							#print('DKIM DEBUG ENABLED')
 							if NAME == 'nan':
 								NAME = '---'
-							if len(key[1][2]) > 100:
-								CONTENT = str(CONTENT[:40]) + f'{Style.BRIGHT}{Fore.YELLOW}...(Use cmd "retr DOMAIN ID"){Style.RESET_ALL}'
+							#if len(key[1][2]) > 100:
+							#	CONTENT = str(CONTENT[:40]) + f'{Style.BRIGHT}{Fore.YELLOW}...(Use cmd "retr DOMAIN ID"){Style.RESET_ALL}'
 							print('{} {} -> [ID: {}] Name: {} , Type: {} , Content: {} , TTL: {} , Priority: {}'.format(f'{Fore.GREEN}DKIM record found on domain{Style.RESET_ALL}', domain, ID, NAME, TYPE, CONTENT, TTL, PRIORITY))
 						else:
 							print('{} {}'.format(f'{Fore.GREEN}DKIM record found on domain{Style.RESET_ALL}', domain))
@@ -396,7 +404,7 @@ def x_add_record(domain_name, record_name, record_type, record_content, record_t
 				print('{} {}'.format(f'{Style.BRIGHT}{Fore.CYAN}Record already exists -> ID:{Style.RESET_ALL}', id))
 				return
 
-	req = s.post(url, headers=headers, data = data)
+	req = s.post(url, headers = headers, data = data)
 	if req.status_code != 200:
 		raise PageError
 
@@ -443,7 +451,7 @@ def x_edit_record(domain_name, record_id, record_name, record_type, record_conte
 		print(f'{Style.BRIGHT}{Fore.YELLOW}Record PRIORITY must be a number{Style.RESET_ALL}')
 		return
 
-	req = s.post(url, headers=headers, data = data)
+	req = s.post(url, headers = headers, data = data)
 	if req.status_code != 200:
 		raise PageError
 
@@ -475,7 +483,7 @@ def x_delete_record(domain_name, record_id):
 		'extra[domain_id]': domain_id
 		}
 
-	req = s.post(url, headers=headers, data = data)
+	req = s.post(url, headers = headers, data = data)
 	if req.status_code != 200:
 		raise PageError
 
