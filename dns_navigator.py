@@ -271,8 +271,6 @@ def full_load():
 		for _, domain in tqdm(domain_list):
 			if debug_mode:
 				print('Full loading... {}'.format(domain))
-			#if domain == 'assemblaggiototale.it':
-			#	break
 			get_domain_records(domain, 'full_load')
 
 	if not full_records_dict:
