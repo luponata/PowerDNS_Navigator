@@ -1,7 +1,9 @@
-tqdm
-pandas
-colorama
-datetime
-icecream
+os
+sys
+json
+base64
+urllib
+pathlib
 requests
-prettytable
+tldextract
+python-dotenv
